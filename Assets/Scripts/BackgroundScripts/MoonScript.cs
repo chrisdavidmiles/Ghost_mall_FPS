@@ -5,6 +5,7 @@ using UnityEngine;
 public class MoonScript : MonoBehaviour
 {
     public Light moonlight;
+    public Camera camera;
     public bool bloodMoonEnabled;
     public float changeRate = 0.5f;
     public float changeTime = 1f;
@@ -30,21 +31,40 @@ public class MoonScript : MonoBehaviour
         if(Input.GetKeyDown(KeyCode.F) && !bloodMoonEnabled)
         {
             shiftingPhase = true;
-            MoonShift(Color.red, changeRate);
+            StartCoroutine(MoonShift(Color.red, changeRate));
             bloodMoonEnabled = true;
         }
         else if(Input.GetKeyDown(KeyCode.F) && bloodMoonEnabled)
         {
             shiftingPhase = true;
-            MoonShift(Color.gray, changeRate);
+            StartCoroutine(MoonShift(Color.gray, changeRate));
             bloodMoonEnabled = false;
         }
     }
 
 
-    public void MoonShift(Color newColor, float changeRate)
+    public IEnumerator MoonShift(Color newColor, float changeRate)
     {
-        moonlight.color = Color.Lerp(moonlight.color, newColor, 1f);
+        //moonlight.color = Color.Lerp(moonlight.color, newColor, 1f);
+        //camera.backgroundColor = Color.Lerp(moonlight.color, newColor, 1f);
+
+
+        yield return shiftingPhase = true;
+
+
+        if (shiftingPhase)
+        {
+            changeTime -= Time.deltaTime;
+            moonlight.color = Color.Lerp(moonlight.color, newColor, changeRate);
+            camera.backgroundColor = Color.Lerp(moonlight.color, newColor, changeRate);
+            //Debug.Log(alertCountdown);
+
+            if (changeTime <= 0)
+            {
+                shiftingPhase = false;
+                changeTime = 1;
+            }
+        }
     }
 
 

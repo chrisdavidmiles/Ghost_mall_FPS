@@ -10,14 +10,12 @@ public class PlayerController : MonoBehaviour
     //public Slider healthSlider;
 
 
-
-
     public float health = 100f;
-    public float moveSpeed = 10f;
-    public float walkSpeed = 10f;
-    public float runSpeed = 20f;
-    public float gravity = -9.81f;
-    public float jumpHeight = 100f;
+    public float moveSpeed = 5f;
+    public float walkSpeed = 5f;
+    public float runSpeed = 10f;
+    public float gravity = -20f;
+    public float jumpHeight = 10f;
     public float maxHealth;
 
     private bool canRegainHealth;
@@ -26,7 +24,7 @@ public class PlayerController : MonoBehaviour
 
 
     public Transform groundCheck;
-    public float groundDistance = 0.4f;
+    public float groundDistance = 0.3f;
     public LayerMask groundMask;
     public LayerMask enemyLayer;
     Vector3 velocity;
@@ -36,12 +34,6 @@ public class PlayerController : MonoBehaviour
     public Transform playerTransform;
 
 
-
-    //Code for leaning
-    public float leanDistance = 0;
-    public float maxLeanDistance = 20;
-    public int leanSpeed = 50;
-    public bool isLeaning = false;
 
     private void Start()
     {
@@ -66,18 +58,9 @@ public class PlayerController : MonoBehaviour
         if ((Input.GetKey(KeyCode.LeftShift)))
         {
             moveSpeed = runSpeed;
-
-
-            //health = health - Time.deltaTime * moveSpeed;
-
-            if (health < 5)
-            {
-                StartCoroutine(CatchingBreath(healthRegenTimer));
-            }
         }
         else
             moveSpeed = walkSpeed;
-
 
     }
 
@@ -110,15 +93,12 @@ public class PlayerController : MonoBehaviour
         //healthSlider.value = health;
 
         if (health < maxHealth)
-        {
             health = health + (healthRegenSpeed * Time.deltaTime);
-        }
 
 
         if (!canRegainHealth)
-        {
             StartCoroutine(WaitForHealthRegen(healthRegenTimer));
-        }
+
     }
 
 
@@ -128,7 +108,6 @@ public class PlayerController : MonoBehaviour
     {
         health -= damageTaken;
 
-        //Debug.Log("We're taking damage");
         if (health <= 0)
         {
             Die();
@@ -138,8 +117,8 @@ public class PlayerController : MonoBehaviour
 
     void Die()
     {
+        //Currently commented out, but will be enabled when pausing is enabled
         //pauseScript.GameOver();
-        //Destroy(gameObject);
     }
 
     IEnumerator WaitForHealthRegen(float waitBeforeHealthRegens)
