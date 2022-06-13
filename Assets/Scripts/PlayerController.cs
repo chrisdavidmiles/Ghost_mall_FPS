@@ -14,7 +14,8 @@ public class PlayerController : MonoBehaviour
     public float moveSpeed = 5f;
     public float walkSpeed = 5f;
     public float runSpeed = 10f;
-    public float gravity = -20f;
+    public float currentGravity = -20f;
+    [SerializeField] float defaultGravity = -20f;
     public float jumpHeight = 10f;
     public float maxHealth;
 
@@ -33,6 +34,8 @@ public class PlayerController : MonoBehaviour
     public Camera playerCam;
     public Transform playerTransform;
 
+    public bool godMode = false;
+
 
 
     private void Start()
@@ -43,16 +46,23 @@ public class PlayerController : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        isGrounded = Physics.CheckSphere(groundCheck.position, groundDistance, groundMask);
 
-        MovementSystem();
-        HealthSystem();
 
-        //Press jump to jump
-        if (Input.GetButtonDown("Jump") && isGrounded)
+        if (!godMode)
         {
-            Jump();
+            MovementSystem();
+            isGrounded = Physics.CheckSphere(groundCheck.position, groundDistance, groundMask);
+            //HealthSystem();
         }
+        else
+        {
+            GodModeMovement();
+        }
+
+
+        if (Input.GetButtonDown("Jump") && isGrounded)
+            Jump();
+
 
         //Running
         if ((Input.GetKey(KeyCode.LeftShift)))
@@ -61,6 +71,8 @@ public class PlayerController : MonoBehaviour
         }
         else
             moveSpeed = walkSpeed;
+
+        
 
     }
 
@@ -76,7 +88,7 @@ public class PlayerController : MonoBehaviour
 
         Vector3 move = transform.right * x + transform.forward * z;
         controller.Move(move * moveSpeed * Time.deltaTime);
-        velocity.y += gravity * Time.deltaTime;
+        velocity.y += currentGravity * Time.deltaTime;
         controller.Move(velocity * Time.deltaTime);
 
     }
@@ -88,20 +100,17 @@ public class PlayerController : MonoBehaviour
 
 
 
-    public void HealthSystem()
+    /*public void HealthSystem()
     {
         //healthSlider.value = health;
 
         if (health < maxHealth)
             health = health + (healthRegenSpeed * Time.deltaTime);
 
-
         if (!canRegainHealth)
             StartCoroutine(WaitForHealthRegen(healthRegenTimer));
 
-    }
-
-
+    }*/
 
 
     public void TakeDamage(float damageTaken)
@@ -121,28 +130,64 @@ public class PlayerController : MonoBehaviour
         //pauseScript.GameOver();
     }
 
-    IEnumerator WaitForHealthRegen(float waitBeforeHealthRegens)
+    /*IEnumerator WaitForHealthRegen(float waitBeforeHealthRegens)
     {
         yield return new WaitForSeconds(waitBeforeHealthRegens);
         canRegainHealth = true;
+    }*/
+
+
+
+
+
+    public void GodMode()
+    {
+
+        if (!godMode)
+        {
+            godMode = true;
+            currentGravity = 0;
+    
+        }
+        else
+        {
+            currentGravity = defaultGravity;
+            godMode = false;
+            Debug.Log("GodMode is disabled. Gravity is now set to " + currentGravity);
+        }
+
     }
 
-    IEnumerator CatchingBreath(float tiredTimer)
+
+    private void GodModeMovement()
     {
-        yield return new WaitForSeconds(tiredTimer);
+        float x = Input.GetAxis("Horizontal");
+        float z = Input.GetAxis("Vertical");
+
+
+        Vector3 move = transform.right * x + transform.forward * z;
+        controller.Move(move * moveSpeed * Time.deltaTime);
+
+        if (Input.GetKey(KeyCode.E))
+            velocity.y += (moveSpeed * Time.deltaTime) * 2;
+
+        if (Input.GetKey(KeyCode.Q))
+            velocity.y -= (moveSpeed * Time.deltaTime) * 2;
+
+
+        controller.Move(velocity * Time.deltaTime);
+
+
+        
+
+        //Make sure moving up and down don't happen forever
+        if((velocity.y > 0 || velocity.y < 0) && !(Input.GetKey(KeyCode.E) || Input.GetKey(KeyCode.Q)))
+        {
+            velocity.y = 0;
+        }    
+ 
     }
 
-    public void IvySettings()
-    {
-        moveSpeed = 20f;
-        walkSpeed = 20f;
-        runSpeed = 40f;
-        gravity = -22;
-        jumpHeight = 12f;
-        maxHealth = 200;
-        health = maxHealth;
-        healthRegenTimer = 0.25f;
-    }
 
 
 }

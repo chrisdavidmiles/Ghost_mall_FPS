@@ -1,0 +1,22 @@
+fileFormatVersion: 2
+guid: 6f8e60816147ea349b84f7967a648f27
+TrueTypeFontImporter:
+  externalObjects: {}
+  serializedVersion: 4
+  fontSize: 16
+  forceTextureCase: -2
+  characterSpacing: 0
+  characterPadding: 1
+  includeFontData: 1
+  fontNames:
+  - Mallary
+  fallbackFontReferences:
+  - {fileID: 12800000, guid: dd522b12c10029440b983d3b2a5b7cbc, type: 3}
+  customCharacters: 
+  fontRenderingMode: 0
+  ascentCalculationMode: 1
+  useLegacyBoundsCalculation: 0
+  shouldRoundAdvanceValue: 1
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

@@ -7,8 +7,8 @@ public class MoonScript : MonoBehaviour
     public Light moonlight;
     public Camera camera;
     public bool bloodMoonEnabled;
-    public float changeRate = 0.5f;
-    public float changeTime = 1f;
+    public float defaultChangeTime = 0.2f;
+    public float changeTime = 0;
 
     public bool shiftingPhase = false;
 
@@ -19,10 +19,15 @@ public class MoonScript : MonoBehaviour
     {
         if (moonlight.color == Color.red)
         {
+            StartCoroutine(MoonShift(moonlight.color, Color.red));
             bloodMoonEnabled = true;
         }
         else
+        {
             bloodMoonEnabled = false;
+            StartCoroutine(MoonShift(moonlight.color, Color.gray));
+        }
+
     }
 
     // Update is called once per frame
@@ -30,41 +35,40 @@ public class MoonScript : MonoBehaviour
     {
         if(Input.GetKeyDown(KeyCode.F) && !bloodMoonEnabled)
         {
-            shiftingPhase = true;
-            StartCoroutine(MoonShift(Color.red, changeRate));
+            //shiftingPhase = true;
+            StartCoroutine(MoonShift(moonlight.color, Color.red));
             bloodMoonEnabled = true;
         }
         else if(Input.GetKeyDown(KeyCode.F) && bloodMoonEnabled)
         {
-            shiftingPhase = true;
-            StartCoroutine(MoonShift(Color.gray, changeRate));
+            //shiftingPhase = true;
+            StartCoroutine(MoonShift(moonlight.color, Color.gray));
             bloodMoonEnabled = false;
         }
     }
 
 
-    public IEnumerator MoonShift(Color newColor, float changeRate)
+    public IEnumerator MoonShift(Color oldColor, Color newColor)
     {
-        //moonlight.color = Color.Lerp(moonlight.color, newColor, 1f);
-        //camera.backgroundColor = Color.Lerp(moonlight.color, newColor, 1f);
+        shiftingPhase = true;
+        changeTime = 0;
 
 
-        yield return shiftingPhase = true;
-
-
-        if (shiftingPhase)
+        while (shiftingPhase)
         {
-            changeTime -= Time.deltaTime;
-            moonlight.color = Color.Lerp(moonlight.color, newColor, changeRate);
-            camera.backgroundColor = Color.Lerp(moonlight.color, newColor, changeRate);
-            //Debug.Log(alertCountdown);
+            yield return null;
+            changeTime += Time.deltaTime;
+            moonlight.color = Color.Lerp(oldColor, newColor, (changeTime / defaultChangeTime));
+            camera.backgroundColor = Color.Lerp(oldColor, newColor, (changeTime / defaultChangeTime));
+            
 
-            if (changeTime <= 0)
+            if (changeTime >= defaultChangeTime)
             {
                 shiftingPhase = false;
-                changeTime = 1;
+                changeTime = 0;
             }
         }
+        
     }
 
 

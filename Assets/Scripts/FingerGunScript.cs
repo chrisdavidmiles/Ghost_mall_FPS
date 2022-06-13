@@ -140,7 +140,7 @@ public class FingerGunScript : MonoBehaviour
     public IEnumerator SpawnLineTrail(Vector3 hitPoint)
     {
 
-        Debug.Log("Starting the bullet trail");
+        //Debug.Log("Starting the bullet trail");
         float time = 0;
         Vector3 startPosition = muzzle.transform.position;
 
@@ -156,7 +156,7 @@ public class FingerGunScript : MonoBehaviour
             bulletLineRenderer.SetPosition(currentPositions+ 1, Vector3.Lerp(startPosition, hitPoint, time));
             time += Time.deltaTime / bulletTravelTime;
 
-            Debug.Log("Balls deep in the bullet trail");
+            //Debug.Log("Balls deep in the bullet trail");
             yield return null;
 
         }

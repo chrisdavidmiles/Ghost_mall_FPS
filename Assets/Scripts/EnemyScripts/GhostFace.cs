@@ -6,22 +6,38 @@ public class GhostFace : MonoBehaviour
 {
 
     //Variables for fieldOfView
-    public float viewRadius = 60;
-    public float viewAngle = 45f;
-    public bool canSeePlayer = false;
-    [SerializeField]
-    private LayerMask targetMask;
-    [SerializeField]
-    private LayerMask wallsMask;
+    [SerializeField] private float viewRadius = 60;
+    [SerializeField] private float viewAngle = 45f;
+    private bool canSeePlayer = false;
+    [SerializeField] private LayerMask targetMask;
+    [SerializeField] private LayerMask wallsMask;
 
 
 
     public float health = 100;
     public GameObject player;
+    public GameManager gameManager;
+    public ParticleSystem fireParticles;
     public float enemySpeed = 10f;
     public float attackDistance = 5f;
     public Animator anim;
-    private bool currentAttack = false;
+    private bool currentlyAttacking = false;
+
+
+    //slowed down time variables
+    [SerializeField] private bool timeSlowActive = false;
+    [SerializeField] private float normalMoveSpeed;
+    [SerializeField] private float normalAnimSpeed;
+
+    public float timeSlowDownLength = 2f;
+    public float timeNormalSpeed = 1;
+    public float timeSlowMoveScale = 0.5f;
+    public float timeSlowAnimScale = 0.5f;
+
+    
+    public Color slowedFireColor;
+    public Color defaultFireColor;
+
 
 
 
@@ -30,21 +46,24 @@ public class GhostFace : MonoBehaviour
     void Start()
     {
         player = GameObject.Find("Player");
+        //gameManager = GameManager.FindObjectOfType<GameManager>();
         StartCoroutine(FOVRoutine());
 
+
+        normalMoveSpeed = enemySpeed;
+        normalAnimSpeed = anim.speed;
     }
 
     // Update is called once per frame
     void Update()
     {
-        if (canSeePlayer && !currentAttack)
+        if (canSeePlayer && !currentlyAttacking)
         {
             MoveTowardsPoint(player.transform.position);
             transform.LookAt(player.transform);
  
             if (Vector3.Distance(transform.position, player.transform.position) < attackDistance)
             {
-                Debug.Log("Smells like ATTACKS");
                 StartCoroutine(Attack());
             }
         }
@@ -60,7 +79,6 @@ public class GhostFace : MonoBehaviour
             yield return new WaitForSeconds(0.2f);
             FieldOfView();
         }
-
     }
 
     private void FieldOfView()
@@ -99,19 +117,46 @@ public class GhostFace : MonoBehaviour
 
     private void MoveTowardsPoint(Vector3 movingToPoint)
     {
-        transform.position = transform.position + ((movingToPoint - transform.position).normalized * Time.deltaTime) * enemySpeed;
+        transform.position = transform.position + ((movingToPoint - transform.position).normalized * (Time.deltaTime)) * enemySpeed;
     }
 
 
     private IEnumerator Attack()
     {
-        currentAttack = true;
+        currentlyAttacking = true;
         anim.SetBool("Attacking", true);
         yield return new WaitForSeconds(0.5f);
         anim.SetBool("Attacking", false);
-        currentAttack = false;
+        currentlyAttacking = false;
         transform.LookAt(player.transform);
     }
+
+
+    public void SlowDownTime()
+    {
+        var main = fireParticles.main;
+
+        anim.speed *= timeSlowAnimScale;
+        enemySpeed *= timeSlowMoveScale;
+
+
+        main.simulationSpeed = 0.75f;
+        main.startColor = slowedFireColor;
+    }
+
+    public void BackToNormalTime()
+    {
+        var main = fireParticles.main;
+        
+        Debug.Log("Ghosties going back to normal time");
+        anim.speed = normalAnimSpeed;
+        enemySpeed = normalMoveSpeed;
+
+        main.simulationSpeed = 1;
+        main.startColor = defaultFireColor;
+        
+    }
+
 
 
     public void TakeDamage(float damageTaken)
@@ -125,9 +170,16 @@ public class GhostFace : MonoBehaviour
         }
     }
 
+
     void Die()
     {
-        Destroy(gameObject);
+        Debug.Log("Me ghost, me ded");
+
+        if (!timeSlowActive)
+        gameManager.StartSlowDown();
+
+
+        Destroy(this.gameObject);
     }
 
 
