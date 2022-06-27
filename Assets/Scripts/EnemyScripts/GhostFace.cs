@@ -46,7 +46,7 @@ public class GhostFace : MonoBehaviour
     void Start()
     {
         player = GameObject.Find("Player");
-        //gameManager = GameManager.FindObjectOfType<GameManager>();
+        gameManager = GameManager.FindObjectOfType<GameManager>();
         StartCoroutine(FOVRoutine());
 
 
