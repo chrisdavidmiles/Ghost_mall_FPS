@@ -2,41 +2,39 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class GhostFace : MonoBehaviour
+public class MovieBossController : MonoBehaviour
 {
-
     //Variables for fieldOfView
+    [Header("Field of View Variables")] 
     [SerializeField] private float viewRadius = 60;
     [SerializeField] private float viewAngle = 45f;
     private bool canSeePlayer = false;
     [SerializeField] private LayerMask targetMask;
     [SerializeField] private LayerMask wallsMask;
+    [SerializeField] private CharacterController controller;
+    [SerializeField] private Vector3 rotationOffset;
 
 
-
+    [Header("Attacking and health")]
     public float health = 100;
     public GameObject player;
     public GameManager gameManager;
-    public ParticleSystem fireParticles;
     public float enemySpeed = 10f;
+    public float defaultMoveSpeed = 10f;
     public float attackDistance = 5f;
     public Animator anim;
-    private bool currentlyAttacking = false;
+    private bool currentlyAttacking;
+    [SerializeField] private float groundSlamTime = 2f;
 
 
-    //slowed down time variables
-    [SerializeField] private bool timeSlowActive = false;
-    [SerializeField] private float normalMoveSpeed;
-    [SerializeField] private float normalAnimSpeed;
+    [Header("Movement and gravity")]
+    private Vector3 velocity;
+    [SerializeField] private float gravity = -20f;
+    [SerializeField] private bool isGrounded = false;
+    [SerializeField] private Transform groundCheck;
+    [SerializeField] private float groundDistance = 0.1f;
+    [SerializeField] private LayerMask groundMask;
 
-    public float timeSlowDownLength = 2f;
-    public float timeNormalSpeed = 1;
-    public float timeSlowMoveScale = 0.5f;
-    public float timeSlowAnimScale = 0.5f;
-
-    
-    public Color slowedFireColor;
-    public Color defaultFireColor;
 
 
 
@@ -50,8 +48,6 @@ public class GhostFace : MonoBehaviour
         StartCoroutine(FOVRoutine());
 
 
-        normalMoveSpeed = enemySpeed;
-        normalAnimSpeed = anim.speed;
     }
 
     // Update is called once per frame
@@ -61,14 +57,24 @@ public class GhostFace : MonoBehaviour
         {
             MoveTowardsPoint(player.transform.position);
             transform.LookAt(player.transform);
- 
-            if (Vector3.Distance(transform.position, player.transform.position) < attackDistance)
+
+            Debug.Log("Distance between boss and player is: " + Vector3.Distance(controller.transform.position, player.transform.position));
+            if (Vector3.Distance(controller.transform.position, player.transform.position) < attackDistance)
             {
+                Debug.Log("Attacking now since we're in range");
                 StartCoroutine(Attack());
             }
+
+        }
+
+        isGrounded = Physics.CheckSphere(groundCheck.position, groundDistance, groundMask);
+
+        if (velocity.y < gravity && !isGrounded)
+        {
+            
+            Gravity();
         }
     }
-
 
 
 
@@ -111,13 +117,24 @@ public class GhostFace : MonoBehaviour
         {
             canSeePlayer = false;
         }
+
+
     }
 
 
 
+    private void Gravity()
+    {
+            velocity.y += gravity * Time.deltaTime;
+    }
+
     private void MoveTowardsPoint(Vector3 movingToPoint)
     {
-        transform.position = transform.position + ((movingToPoint - transform.position).normalized * (Time.deltaTime)) * enemySpeed;
+
+        controller.Move((((player.transform.position - controller.transform.position).normalized) * enemySpeed) * Time.deltaTime);
+        controller.Move(velocity * Time.deltaTime);
+
+        anim.SetBool("Running", true);
     }
 
 
@@ -125,43 +142,20 @@ public class GhostFace : MonoBehaviour
     {
         currentlyAttacking = true;
         anim.SetBool("Attacking", true);
-        yield return new WaitForSeconds(0.5f);
+        anim.SetBool("Running", false);
+        enemySpeed = 0f;
+        yield return new WaitForSeconds(groundSlamTime);
         anim.SetBool("Attacking", false);
         currentlyAttacking = false;
         transform.LookAt(player.transform);
+        enemySpeed = defaultMoveSpeed;
     }
 
-
-    public void SlowDownTime()
-    {
-        var main = fireParticles.main;
-
-        anim.speed *= timeSlowAnimScale;
-        enemySpeed *= timeSlowMoveScale;
-
-
-        main.simulationSpeed = 0.75f;
-        main.startColor = slowedFireColor;
-    }
-
-    public void BackToNormalTime()
-    {
-        var main = fireParticles.main;
-        
-        Debug.Log("Ghosties going back to normal time");
-        anim.speed = normalAnimSpeed;
-        enemySpeed = normalMoveSpeed;
-
-        main.simulationSpeed = 1;
-        main.startColor = defaultFireColor;
-        
-    }
 
 
 
     public void TakeDamage(float damageTaken)
     {
-        //Debug.Log("OUCH CHARLIE THAT HURTS");
         health -= damageTaken;
 
         if (health <= 0)
@@ -173,14 +167,8 @@ public class GhostFace : MonoBehaviour
 
     void Die()
     {
-        Debug.Log("Me ghost, me ded");
-
-        if (!timeSlowActive)
-        gameManager.StartSlowDown();
-
-
+        Debug.Log("BIG BOSS DIE?! HOW DO?!");
         Destroy(this.gameObject);
     }
-
 
 }

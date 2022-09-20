@@ -11,14 +11,23 @@ public class PlayerController : MonoBehaviour
 
 
     public float health = 100f;
-    public float moveSpeed = 5f;
-    public float walkSpeed = 5f;
-    public float runSpeed = 10f;
+
+    //Movement
+    [SerializeField] private float moveSpeed = 5f;
+    [SerializeField] private float walkSpeed = 5f;
+    [SerializeField] private float dashSpeed = 10f;
+    [SerializeField] private float dashMaxTime = 0.5f;
+
+    [SerializeField] private bool dashing = false;
+
     public float currentGravity = -20f;
     [SerializeField] float defaultGravity = -20f;
     public float jumpHeight = 10f;
-    public float maxHealth;
+    public float jumpSpeed = 0.25f;
+    public float jumpMaxTimer = 1f;
 
+
+    public float maxHealth;
     private bool canRegainHealth;
     public float healthRegenTimer;
     public float healthRegenSpeed = 15;
@@ -61,18 +70,17 @@ public class PlayerController : MonoBehaviour
 
 
         if (Input.GetButtonDown("Jump") && isGrounded)
-            Jump();
-
-
-        //Running
-        if ((Input.GetKey(KeyCode.LeftShift)))
         {
-            moveSpeed = runSpeed;
+            StartCoroutine(Jump());
         }
-        else
-            moveSpeed = walkSpeed;
 
-        
+
+        //Dash
+        if ((Input.GetKeyDown(KeyCode.LeftShift) && !dashing))
+        {
+            StartCoroutine(Dash(moveSpeed));
+        }
+
 
     }
 
@@ -85,17 +93,56 @@ public class PlayerController : MonoBehaviour
         float x = Input.GetAxis("Horizontal");
         float z = Input.GetAxis("Vertical");
 
+        //if (velocity.y > currentGravity)
+        //{
+        //    velocity.y += currentGravity;
+        //}
+        //else
+        //{
+        velocity.y += currentGravity;
 
-        Vector3 move = transform.right * x + transform.forward * z;
-        controller.Move(move * moveSpeed * Time.deltaTime);
-        velocity.y += currentGravity * Time.deltaTime;
-        controller.Move(velocity * Time.deltaTime);
+        if(velocity.y < currentGravity)
+        {
+            velocity.y = currentGravity;
+        }
+        //}
 
+        Vector3 move = (transform.right * x) * moveSpeed + (transform.forward * z) * moveSpeed + (velocity);
+
+        controller.Move(move * Time.deltaTime);
+
+        //controller.Move(velocity * Time.deltaTime);
     }
 
-    private void Jump()
+    private IEnumerator Jump()
     {
-        velocity.y = jumpHeight;
+        float timer = 0;
+        moveSpeed *= 2f;
+        //velocity.y += jumpHeight;
+
+
+        //while(velocity.y < jumpHeight)
+        //{
+        //    yield return null;
+        //    //velocity.y += jumpHeight * moveSpeed;
+        //    velocity.y = Mathf.Lerp(velocity.y, jumpHeight, jumpSpeed);
+        //}
+
+        while (timer <= jumpMaxTimer)
+        {
+            yield return null;
+            timer += Time.deltaTime;
+
+            velocity.y = Mathf.Lerp(velocity.y, Mathf.Abs(currentGravity) * jumpHeight, jumpSpeed - timer);
+
+            if (isGrounded && timer > 0.5f)
+            {
+                break;
+            }
+        }
+
+
+        moveSpeed = walkSpeed;
     }
 
 
@@ -189,5 +236,28 @@ public class PlayerController : MonoBehaviour
     }
 
 
+    private IEnumerator Dash(float curMoveSpeed)
+    {
+        moveSpeed = curMoveSpeed * dashSpeed;
+        float dashTimer = 0;
+        dashing = true;
+
+        yield return null;
+        
+
+        while (dashing)
+        {
+            dashTimer += Time.deltaTime;
+
+
+            if (dashTimer > dashMaxTime)
+            {
+                dashing = false;
+                moveSpeed = curMoveSpeed;
+            }
+
+        }
+
+    }
 
 }

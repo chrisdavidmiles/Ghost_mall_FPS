@@ -19,7 +19,7 @@ public class FingerGunScript : MonoBehaviour
     public int bulletsLoaded = 0;
     public float reloadSpeed = 1f;
 
-    public int bulletsPerTriggerPull = 3;
+    public int bulletsPerTriggerPull = 1;
     public bool readyForNextShot = true;
 
 
@@ -27,17 +27,16 @@ public class FingerGunScript : MonoBehaviour
     //Other Components
     public Camera fpsCam;
     public Animator anim;
-    //public LineRenderer bulletTravel;
 
-    public TrailRenderer bulletTravelTrail;
+
     public LineRenderer bulletLineRenderer;
-
-
     public float bulletTravelTime = 0.1f;
+    public float laserOffset = 0.25f;
+    public float distanceSpeed = 50f;
     public GameObject muzzle;
-    public GameObject bulletTrailResetPoint;
     public ParticleSystem muzzleFlash;
     public LayerMask shootableLayers;
+    public GameObject bulletHole;
 
 
 
@@ -45,14 +44,14 @@ public class FingerGunScript : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        //RenderPipelineManager.beginCameraRendering += OnBeginCameraRendering;
+
     }
 
 
-    // Update is called once per frame
+
     void Update()
     {
-        //When mouse button is clicked, check if we're ready to shoot and if we're ok, shoot
+
         if (Input.GetMouseButton(0) && readyForNextShot)
         {
             for (int i = 0; i < (bulletsPerTriggerPull); i++)
@@ -98,6 +97,7 @@ public class FingerGunScript : MonoBehaviour
             {
                 //Instantiate(bulletHole, hit.point, Quaternion.LookRotation(hit.normal));
             }*/
+            Instantiate(bulletHole, hit.point, Quaternion.LookRotation(hit.normal));
         }
 
 
@@ -109,15 +109,18 @@ public class FingerGunScript : MonoBehaviour
         if (hit.collider != null)
         {
            
-            StartCoroutine(SpawnLineTrail(hit.point));
+            StartCoroutine(SpawnLineTrail(hit.point, Vector3.Distance(muzzle.transform.position, hit.point)));
+            //muzzleFlash.Play();
+            
         }
         else
         {
-            StartCoroutine(SpawnLineTrail(muzzle.transform.position + (fpsCam.transform.forward + directionRay) * range));
+            StartCoroutine(SpawnLineTrail((muzzle.transform.position + (fpsCam.transform.forward + directionRay) * range), range));
+            Debug.Log("We did not hit anything, but we're moving ahead");
         }
 
 
-
+        
         muzzleFlash.Play();
 
         readyForNextShot = false;
@@ -136,48 +139,50 @@ public class FingerGunScript : MonoBehaviour
     }
 
 
-
-    public IEnumerator SpawnLineTrail(Vector3 hitPoint)
+    public IEnumerator SpawnLineTrail(Vector3 hitPoint, float distance)
     {
-
-        //Debug.Log("Starting the bullet trail");
-        float time = 0;
+        float timer = 0;
         Vector3 startPosition = muzzle.transform.position;
 
 
         int currentPositions = bulletLineRenderer.positionCount;
         bulletLineRenderer.positionCount = currentPositions + 2;
 
+        float timeBasedOnDistance = bulletTravelTime * ((Mathf.Abs(distance) / distanceSpeed));
 
 
-        while (time < 1)
+        while (timer < timeBasedOnDistance)
         {
-            bulletLineRenderer.SetPosition(currentPositions, muzzle.transform.position);
-            bulletLineRenderer.SetPosition(currentPositions+ 1, Vector3.Lerp(startPosition, hitPoint, time));
-            time += Time.deltaTime / bulletTravelTime;
-
-            //Debug.Log("Balls deep in the bullet trail");
             yield return null;
 
+            //Front end of laser
+            //bulletLineRenderer.SetPosition(currentPositions, muzzle.transform.position);
+            bulletLineRenderer.SetPosition(currentPositions, Vector3.Lerp(muzzle.transform.position, hitPoint, timer));
+            
+
+            //Back end of laser. Lags a little behind the front
+            if (timer > laserOffset)
+            {
+                bulletLineRenderer.SetPosition(currentPositions + 1, Vector3.Lerp(muzzle.transform.position, hitPoint, (timer - laserOffset)));
+                //Instantiate(bulletHole, hitPoint, Quaternion.LookRotation(hitPoint));
+            }
+            else
+            {
+                bulletLineRenderer.SetPosition(currentPositions + 1, muzzle.transform.position);
+                //Instantiate(bulletHole, hitPoint, Quaternion.LookRotation(hitPoint));
+            }
+
+
+            timer += Time.deltaTime;
+            
         }
 
         
-        //bulletLineRenderer.SetPosition(currentPositions + 1, hitPoint);
-        //yield return new WaitForSeconds(0.1f);
 
-        bulletLineRenderer.positionCount = currentPositions;
+        bulletLineRenderer.positionCount = 0;
         bulletLineRenderer.enabled = false;
         anim.SetBool("Firing", false);
     }
 
 
-    /*private void OnEnable()
-    {
-        Application.onBeforeRender += Shoot;
-    }
-
-    private void OnDisable()
-    {
-        Application.onBeforeRender -= Shoot;
-    }*/
 }
