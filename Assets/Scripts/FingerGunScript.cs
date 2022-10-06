@@ -7,45 +7,41 @@ using Unity.Rendering;
 
 public class FingerGunScript : MonoBehaviour
 {
-    public int damage = 40;
-    public int limbMultiplier = 1;
-    public int headshotMultiplier = 2;
+
+    [Header("Damage Calculations")]
+    [SerializeField] private int damage = 40;
+    [SerializeField] private int limbMultiplier = 1;
+    [SerializeField] private int headshotMultiplier = 2;
+    [SerializeField] private float range;
     public float rateOfFire = 0.25f;
 
-    public float range;
+
 
     //Magazine stats
-    public int magazineSize = 30;
-    public int bulletsLoaded = 0;
-    public float reloadSpeed = 1f;
+    [Header("Magazine stats")]
+    [SerializeField] private int bulletsLoaded = 0;
+    [SerializeField] private float reloadSpeed = 1f;
 
-    public int bulletsPerTriggerPull = 1;
-    public bool readyForNextShot = true;
+
+    [Header("Projectile info")]
+    [SerializeField] private int bulletsPerTriggerPull = 1;
+    [SerializeField] private bool readyForNextShot = true;
+    [SerializeField] private float bulletTravelTime = 0.1f;
+    [SerializeField] private float laserOffset = 0.25f;
+    [SerializeField] private float distanceSpeed = 50f;
 
 
 
     //Other Components
-    public Camera fpsCam;
-    public Animator anim;
+    [Header("Components")]
+    [SerializeField] private Camera fpsCam;
+    [SerializeField] private Animator anim;
+    [SerializeField] private LineRenderer bulletLineRenderer;
+    [SerializeField] private GameObject muzzle;
+    [SerializeField] private ParticleSystem muzzleFlash;
+    [SerializeField] private LayerMask shootableLayers;
+    [SerializeField] private GameObject bulletHole;
 
-
-    public LineRenderer bulletLineRenderer;
-    public float bulletTravelTime = 0.1f;
-    public float laserOffset = 0.25f;
-    public float distanceSpeed = 50f;
-    public GameObject muzzle;
-    public ParticleSystem muzzleFlash;
-    public LayerMask shootableLayers;
-    public GameObject bulletHole;
-
-
-
-
-    // Start is called before the first frame update
-    void Start()
-    {
-
-    }
 
 
 
@@ -54,6 +50,7 @@ public class FingerGunScript : MonoBehaviour
 
         if (Input.GetMouseButton(0) && readyForNextShot)
         {
+
             for (int i = 0; i < (bulletsPerTriggerPull); i++)
             {
                 Shoot();
@@ -63,7 +60,7 @@ public class FingerGunScript : MonoBehaviour
 
     }
 
-    
+
 
 
     public void Shoot()
@@ -72,11 +69,12 @@ public class FingerGunScript : MonoBehaviour
         Vector3 directionRay = fpsCam.transform.TransformDirection(0, 0, 1);
         RaycastHit hit;
 
+
         if (Physics.Raycast(fpsCam.transform.position, directionRay, out hit, range, shootableLayers))
         {
             GhostFace target = hit.transform.GetComponentInParent<GhostFace>();
-            Debug.Log(hit.point);
 
+            //Check if we should increase or reduce damage based on where we hit
             if (target != null)
             {
                 if (hit.collider.name == "Limbs")
@@ -93,10 +91,7 @@ public class FingerGunScript : MonoBehaviour
                 Debug.Log("We hit something");
             }
 
-            /*if (hit.collider.tag == "Wall" || hit.collider.tag == "Ground")
-            {
-                //Instantiate(bulletHole, hit.point, Quaternion.LookRotation(hit.normal));
-            }*/
+            //Particles are initiated if we hit something
             Instantiate(bulletHole, hit.point, Quaternion.LookRotation(hit.normal));
         }
 
@@ -105,13 +100,10 @@ public class FingerGunScript : MonoBehaviour
 
 
 
-
+        //If we don't hit anything, we'll treat the laser as going the full distance. If we hit something, that will be the endpoint
         if (hit.collider != null)
         {
-           
             StartCoroutine(SpawnLineTrail(hit.point, Vector3.Distance(muzzle.transform.position, hit.point)));
-            //muzzleFlash.Play();
-            
         }
         else
         {
@@ -120,34 +112,35 @@ public class FingerGunScript : MonoBehaviour
         }
 
 
-        
+
         muzzleFlash.Play();
 
         readyForNextShot = false;
         anim.SetBool("Firing", true);
 
         StartCoroutine(RateOfFire());
-        
+
     }
 
     IEnumerator RateOfFire()
     {
-        //anim.SetBool("Firing", false);
         yield return new WaitForSeconds(rateOfFire);
         readyForNextShot = true;
-        
+
     }
 
 
     public IEnumerator SpawnLineTrail(Vector3 hitPoint, float distance)
     {
+
         float timer = 0;
         Vector3 startPosition = muzzle.transform.position;
 
-
+        //Add starting and end positions to the line renderer
         int currentPositions = bulletLineRenderer.positionCount;
         bulletLineRenderer.positionCount = currentPositions + 2;
 
+        //Equation to make laser travel at a consistent speed, no matter the distance from hand
         float timeBasedOnDistance = bulletTravelTime * ((Mathf.Abs(distance) / distanceSpeed));
 
 
@@ -156,29 +149,26 @@ public class FingerGunScript : MonoBehaviour
             yield return null;
 
             //Front end of laser
-            //bulletLineRenderer.SetPosition(currentPositions, muzzle.transform.position);
             bulletLineRenderer.SetPosition(currentPositions, Vector3.Lerp(muzzle.transform.position, hitPoint, timer));
-            
+
 
             //Back end of laser. Lags a little behind the front
             if (timer > laserOffset)
             {
                 bulletLineRenderer.SetPosition(currentPositions + 1, Vector3.Lerp(muzzle.transform.position, hitPoint, (timer - laserOffset)));
-                //Instantiate(bulletHole, hitPoint, Quaternion.LookRotation(hitPoint));
             }
             else
             {
                 bulletLineRenderer.SetPosition(currentPositions + 1, muzzle.transform.position);
-                //Instantiate(bulletHole, hitPoint, Quaternion.LookRotation(hitPoint));
             }
 
 
             timer += Time.deltaTime;
-            
+
         }
 
-        
 
+        //Reset everything to get rid of laser
         bulletLineRenderer.positionCount = 0;
         bulletLineRenderer.enabled = false;
         anim.SetBool("Firing", false);

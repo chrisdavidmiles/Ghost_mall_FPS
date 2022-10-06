@@ -6,43 +6,45 @@ using UnityEngine.UI;
 public class PlayerController : MonoBehaviour
 {
 
-    public CharacterController controller;
-    //public Slider healthSlider;
-
 
     public float health = 100f;
 
-    //Movement
+    [Header("Movement")]
     [SerializeField] private float moveSpeed = 5f;
     [SerializeField] private float walkSpeed = 5f;
     [SerializeField] private float dashSpeed = 10f;
     [SerializeField] private float dashMaxTime = 0.5f;
-
     [SerializeField] private bool dashing = false;
 
+
+    [Header("Jumping and gravity")]
     public float currentGravity = -20f;
-    [SerializeField] float defaultGravity = -20f;
-    public float jumpHeight = 10f;
-    public float jumpSpeed = 0.25f;
-    public float jumpMaxTimer = 1f;
+    [SerializeField] private float defaultGravity = -20f;
+    [SerializeField] private float jumpHeight = 10f;
+    [SerializeField] private float jumpSpeed = 0.25f;
+    [SerializeField] private float jumpMaxTimer = 1f;
+    [SerializeField] private float groundDistance = 0.3f;
+    private Vector3 velocity;
+    [SerializeField] private bool isGrounded;
 
 
-    public float maxHealth;
-    private bool canRegainHealth;
-    public float healthRegenTimer;
-    public float healthRegenSpeed = 15;
+    [Header("Health")]
+    [SerializeField] private float maxHealth;
+    [SerializeField] private bool canRegainHealth;
+    [SerializeField] private float healthRegenTimer;
+    [SerializeField] private float healthRegenSpeed = 15;
 
 
-    public Transform groundCheck;
-    public float groundDistance = 0.3f;
-    public LayerMask groundMask;
-    public LayerMask enemyLayer;
-    Vector3 velocity;
-    public bool isGrounded;
-    public Animator anim;
-    public Camera playerCam;
-    public Transform playerTransform;
+    [Header("Game Objects")]
+    [SerializeField] private Transform groundCheck;
+    [SerializeField] private LayerMask groundMask;
+    [SerializeField] private LayerMask enemyLayer;
+    [SerializeField] private Animator anim;
+    [SerializeField] private Camera playerCam;
+    [SerializeField] private Transform playerTransform;
+    [SerializeField] private CharacterController controller;
 
+    [Header("Misc")]
     public bool godMode = false;
 
 
@@ -118,23 +120,17 @@ public class PlayerController : MonoBehaviour
     {
         float timer = 0;
         moveSpeed *= 2f;
-        //velocity.y += jumpHeight;
-
-
-        //while(velocity.y < jumpHeight)
-        //{
-        //    yield return null;
-        //    //velocity.y += jumpHeight * moveSpeed;
-        //    velocity.y = Mathf.Lerp(velocity.y, jumpHeight, jumpSpeed);
-        //}
+        
 
         while (timer <= jumpMaxTimer)
         {
             yield return null;
             timer += Time.deltaTime;
 
+            //Jumping goes from current y velocity to the jump height set.
             velocity.y = Mathf.Lerp(velocity.y, Mathf.Abs(currentGravity) * jumpHeight, jumpSpeed - timer);
 
+            //Make sure the jump isn't ended just because we're still touching the ground
             if (isGrounded && timer > 0.5f)
             {
                 break;
@@ -177,11 +173,13 @@ public class PlayerController : MonoBehaviour
         //pauseScript.GameOver();
     }
 
-    /*IEnumerator WaitForHealthRegen(float waitBeforeHealthRegens)
+
+    
+    IEnumerator WaitForHealthRegen(float waitBeforeHealthRegens)
     {
         yield return new WaitForSeconds(waitBeforeHealthRegens);
         canRegainHealth = true;
-    }*/
+    }
 
 
 
@@ -227,7 +225,7 @@ public class PlayerController : MonoBehaviour
 
         
 
-        //Make sure moving up and down don't happen forever
+        //Make sure moving up and down doesn't happen forever
         if((velocity.y > 0 || velocity.y < 0) && !(Input.GetKey(KeyCode.E) || Input.GetKey(KeyCode.Q)))
         {
             velocity.y = 0;

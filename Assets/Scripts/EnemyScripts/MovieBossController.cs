@@ -55,7 +55,7 @@ public class MovieBossController : MonoBehaviour
     {
         if (canSeePlayer && !currentlyAttacking)
         {
-            MoveTowardsPoint(player.transform.position);
+            //MoveTowardsPoint(player.transform.position);
             transform.LookAt(player.transform);
 
             Debug.Log("Distance between boss and player is: " + Vector3.Distance(controller.transform.position, player.transform.position));
@@ -128,14 +128,14 @@ public class MovieBossController : MonoBehaviour
             velocity.y += gravity * Time.deltaTime;
     }
 
-    private void MoveTowardsPoint(Vector3 movingToPoint)
+    /*private void MoveTowardsPoint(Vector3 movingToPoint)
     {
 
         controller.Move((((player.transform.position - controller.transform.position).normalized) * enemySpeed) * Time.deltaTime);
         controller.Move(velocity * Time.deltaTime);
 
         anim.SetBool("Running", true);
-    }
+    }*/
 
 
     private IEnumerator Attack()
